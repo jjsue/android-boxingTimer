@@ -10,7 +10,7 @@ import {
   IonTabs
 } from '@ionic/react';
 import { IonReactRouter } from '@ionic/react-router';
-import { ellipse, square, triangle } from 'ionicons/icons';
+import { timerOutline } from 'ionicons/icons';
 import Tab1 from './pages/Tab1';
 
 /* Core CSS required for Ionic components to work properly */
@@ -42,7 +42,7 @@ const App: React.FC = () => (
         </IonRouterOutlet>
         <IonTabBar slot="bottom">
           <IonTabButton tab="tab1" href="/tab1">
-            <IonIcon icon={triangle} />
+            <IonIcon icon={timerOutline} />
             <IonLabel>Boxing timer</IonLabel>
           </IonTabButton>
         </IonTabBar>

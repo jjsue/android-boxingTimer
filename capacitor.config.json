@@ -1,6 +1,6 @@
 {
-  "appId": "io.ionic.starter",
-  "appName": "timer",
+  "appId": "es.proyectocontemplador.boxingTimer",
+  "appName": "Boxing Timer",
   "bundledWebRuntime": false,
   "npmClient": "npm",
   "webDir": "build",

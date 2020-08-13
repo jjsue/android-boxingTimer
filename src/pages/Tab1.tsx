@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { IonContent, IonHeader, IonPage, IonTitle, IonToolbar, IonItemDivider, IonItem, IonLabel, IonSelect, IonSelectOption, IonCard, IonButton, IonGrid, IonCol, IonRow } from '@ionic/react';
+import { IonContent, IonHeader, IonPage, IonTitle, IonToolbar, IonItemDivider, IonItem, IonLabel, IonSelect, IonSelectOption, IonCard, IonButton, IonGrid, IonCol, IonRow, IonText } from '@ionic/react';
 import './Tab1.css';
 import { setInterval } from 'timers';
 const Tab1: React.FC = () => {
@@ -10,11 +10,14 @@ const Tab1: React.FC = () => {
   const [disabledPause, setDisabledPause] = useState(true);
   const [disabledForm, setDisabledForm] = useState(false);
   const [intervalStore, setIntervalStore] = useState({});
+  const [restNow, setRestNow] = useState(true);
   //Inputs
   const [minutesInput, setminutesInput] = useState(0);
   const [secondsInput, setSecondsInput] = useState(0);
-  const [restInput, setRestInput] = useState(0);
-  const [roundsInput, setRoundsInput] = useState(0);
+  const [restInput, setRestInput] = useState(10);
+  const [roundsInput, setRoundsInput] = useState(1);
+  //Otros
+  const [currentRound, setCurrentRound] = useState(1);
   const setMinutesValue = (event: any) => {
     event.preventDefault();
     setminutesInput(parseInt(event.target.value));
@@ -32,7 +35,7 @@ const Tab1: React.FC = () => {
     setRoundsInput(parseInt(event.target.value));
   }
 
-  useEffect(() => { //Para actualizar el showvalue
+  useEffect(() => { //Para actualizar el showvalue antes de empezar
     if (secondsInput >= 10) {
       setShowValue(`0${minutesInput}:${secondsInput}`);
     } else {
@@ -40,28 +43,39 @@ const Tab1: React.FC = () => {
     }
     setTotalTime((minutesInput * 60) + secondsInput);
   }, [minutesInput, secondsInput]);
-  useEffect(() => { //Para actualizar el showvalue
+  useEffect(() => { //Para actualizar el showvalue durante la ejecución
     if (totalTime <= 0) {
-      console.log(0);
       setShowValue('00:00');
       if ('_id' in intervalStore) {
-        window.clearInterval(intervalStore['_id']);
+        window.clearInterval(intervalStore['_id']); //Aqui vamos a controlar los descansos y los reinicios
+        if (currentRound < roundsInput && restNow) {
+          setTotalTime(restInput);
+          intervalSetter(restInput);
+          setRestNow(false);
+        } else if (currentRound < roundsInput && !restNow) {
+          setTotalTime(restInput);
+          intervalSetter(restInput);
+          setRestNow(true);
+          setCurrentRound(currentRound + 1);
+        }
       }
     }
     else if (totalTime / 60 >= 1) {
-      // setShowValue(`0${Math.floor(totalTime / 60)}:${totalTime - (Math.floor(totalTime / 60) * 60) < 10 ? 0 + totalTime - (Math.floor(totalTime / 60) * 60) : totalTime - (Math.floor(totalTime / 60) * 60)}`)
       setShowValue('0' + Math.floor(totalTime / 60) + ':' + (totalTime - (Math.floor(totalTime / 60) * 60) < 10 ? '0' + (totalTime - (Math.floor(totalTime / 60) * 60)) : totalTime - (Math.floor(totalTime / 60) * 60)))
     } else {
       setShowValue('00:' + (totalTime < 10 ? '0' + totalTime : totalTime));
     }
-  }, [totalTime]);
-  const startFn = (event: any) => {
-    event.preventDefault();
-    let timeVar = totalTime;
+  }, [totalTime, intervalStore, restInput, currentRound, restNow, roundsInput]);
+  const intervalSetter = (time: number) => {
+    let timeVar = time;
     setIntervalStore(setInterval(() => {
       timeVar--
       setTotalTime(timeVar);
     }, 1000));
+  }
+  const startFn = (event: any) => {
+    event.preventDefault();
+    intervalSetter(totalTime);
     setDisabledForm(true);
     setDisabledPause(false);
     setDisabledStart(true);
@@ -71,10 +85,26 @@ const Tab1: React.FC = () => {
     event.preventDefault();
     if ('_id' in intervalStore) {
       window.clearInterval(intervalStore['_id']);
-      setIntervalStore({});
-      setDisabledPause(true);
-      setDisabledStart(false);
     }
+    setIntervalStore({});
+    setDisabledPause(true);
+    setDisabledStart(false);
+  }
+  const stopFn = (event: any) => {
+    event.preventDefault();
+    if ('_id' in intervalStore) {
+      window.clearInterval(intervalStore['_id']);
+    }
+    setIntervalStore({});
+    setDisabledPause(true);
+    setDisabledStart(false);
+    setDisabledStop(true);
+    setDisabledForm(false);
+    setminutesInput(0);
+    setSecondsInput(0);
+    setRestInput(0);
+    setRoundsInput(1);
+    setCurrentRound(1);
   }
   return (
     <IonPage>
@@ -89,14 +119,17 @@ const Tab1: React.FC = () => {
             <IonTitle size="large">Boxing Timer</IonTitle>
           </IonToolbar>
         </IonHeader>
-        <h1 className="ion-text-center ion-margin-bottom">{showValue}</h1>
+        <IonText>
+          <h1 className="ion-text-center ion-margin-bottom counter">{showValue}</h1>
+          <p className="ion-text-center ion-margin-bottom">Round {currentRound} of {roundsInput}</p>
+        </IonText>
         <IonGrid>
           <IonRow>
             <IonCol>
               <IonButton disabled={disabledPause} expand="block" color="warning" onClick={e => pauseFn(e)}>Pause</IonButton>
             </IonCol>
             <IonCol>
-              <IonButton disabled={disabledStop} expand="block" color="danger">Stop</IonButton>
+              <IonButton disabled={disabledStop} expand="block" color="danger" onClick={e => stopFn(e)}>Stop</IonButton>
             </IonCol>
           </IonRow>
           <IonRow>
@@ -143,7 +176,6 @@ const Tab1: React.FC = () => {
           <IonItem>
             <IonLabel>Rounds</IonLabel>
             <IonSelect disabled={disabledForm} value={roundsInput} okText="Ok" cancelText="Cancel" onIonChange={e => setRoundsValue(e)}>
-              <IonSelectOption value="0">0</IonSelectOption>
               <IonSelectOption value="1">1</IonSelectOption>
               <IonSelectOption value="2">2</IonSelectOption>
               <IonSelectOption value="3">3</IonSelectOption>
