@@ -2,9 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { IonContent, IonHeader, IonPage, IonTitle, IonToolbar, IonItemDivider, IonItem, IonLabel, IonSelect, IonSelectOption, IonCard, IonButton, IonGrid, IonCol, IonRow, IonText } from '@ionic/react';
 import './Tab1.css';
 import { setInterval } from 'timers';
+import { audioController } from './audio';
 const Tab1: React.FC = () => {
   const [showValue, setShowValue] = useState('');
   const [totalTime, setTotalTime] = useState(0);
+  const [totalTimeCopy, setTotalTimeCopy] = useState(0);
   const [disabledStart, setDisabledStart] = useState(false);
   const [disabledStop, setDisabledStop] = useState(true);
   const [disabledPause, setDisabledPause] = useState(true);
@@ -18,6 +20,22 @@ const Tab1: React.FC = () => {
   const [roundsInput, setRoundsInput] = useState(1);
   //Otros
   const [currentRound, setCurrentRound] = useState(1);
+  const [allAudio, setAllAudio] = useState(
+    <>
+      <audio id="myBell">
+        <source src="./bell.wav" />
+      </audio>
+      <audio id="myEndBell">
+        <source src="./end.wav" />
+      </audio>
+      <audio id="secondsOut">
+        <source src="./secondsOut.m4a" />
+      </audio>
+      <audio id="tenSecondsLeft">
+        <source src="./tenSecondsLeft.m4a" />
+      </audio>
+    </>
+  );
   const setMinutesValue = (event: any) => {
     event.preventDefault();
     setminutesInput(parseInt(event.target.value));
@@ -34,7 +52,6 @@ const Tab1: React.FC = () => {
     event.preventDefault();
     setRoundsInput(parseInt(event.target.value));
   }
-
   useEffect(() => { //Para actualizar el showvalue antes de empezar
     if (secondsInput >= 10) {
       setShowValue(`0${minutesInput}:${secondsInput}`);
@@ -42,19 +59,28 @@ const Tab1: React.FC = () => {
       setShowValue(`0${minutesInput}:0${secondsInput}`);
     }
     setTotalTime((minutesInput * 60) + secondsInput);
+    setTotalTimeCopy((minutesInput * 60) + secondsInput);
   }, [minutesInput, secondsInput]);
   useEffect(() => { //Para actualizar el showvalue durante la ejecución
+    if (totalTime <= 10 && totalTime >= 1) {
+      if (totalTime === 10 && !restNow) {
+        audioController(document.getElementById("secondsOut"), document.getElementById("myEndBell"), true);
+      } else if (restNow) {
+        audioController(document.getElementById("tenSecondsLeft"), document.getElementById("myEndBell"), true);
+      }
+    }
     if (totalTime <= 0) {
       setShowValue('00:00');
       if ('_id' in intervalStore) {
+        audioController(document.getElementById("myBell"), document.getElementById("myEndBell"), !restNow);
         window.clearInterval(intervalStore['_id']); //Aqui vamos a controlar los descansos y los reinicios
         if (currentRound < roundsInput && restNow) {
           setTotalTime(restInput);
           intervalSetter(restInput);
           setRestNow(false);
         } else if (currentRound < roundsInput && !restNow) {
-          setTotalTime(restInput);
-          intervalSetter(restInput);
+          setTotalTime(totalTimeCopy);
+          intervalSetter(totalTimeCopy);
           setRestNow(true);
           setCurrentRound(currentRound + 1);
         }
@@ -65,7 +91,7 @@ const Tab1: React.FC = () => {
     } else {
       setShowValue('00:' + (totalTime < 10 ? '0' + totalTime : totalTime));
     }
-  }, [totalTime, intervalStore, restInput, currentRound, restNow, roundsInput]);
+  }, [totalTime, intervalStore, restInput, currentRound, restNow, roundsInput, totalTimeCopy]);
   const intervalSetter = (time: number) => {
     let timeVar = time;
     setIntervalStore(setInterval(() => {
@@ -75,6 +101,7 @@ const Tab1: React.FC = () => {
   }
   const startFn = (event: any) => {
     event.preventDefault();
+    audioController(document.getElementById("myBell"), document.getElementById("myEndBell"), true);
     intervalSetter(totalTime);
     setDisabledForm(true);
     setDisabledPause(false);
@@ -122,6 +149,7 @@ const Tab1: React.FC = () => {
         <IonText>
           <h1 className="ion-text-center ion-margin-bottom counter">{showValue}</h1>
           <p className="ion-text-center ion-margin-bottom">Round {currentRound} of {roundsInput}</p>
+          {allAudio}
         </IonText>
         <IonGrid>
           <IonRow>
