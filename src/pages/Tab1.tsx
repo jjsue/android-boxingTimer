@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { IonContent, IonHeader, IonPage, IonTitle, IonToolbar, IonItemDivider, IonItem, IonLabel, IonSelect, IonSelectOption, IonCard, IonButton, IonGrid, IonCol, IonRow, IonText } from '@ionic/react';
+import { IonToast, IonContent, IonHeader, IonPage, IonTitle, IonToolbar, IonItemDivider, IonItem, IonLabel, IonSelect, IonSelectOption, IonCard, IonButton, IonGrid, IonCol, IonRow, IonText } from '@ionic/react';
 import './Tab1.css';
 import { setInterval } from 'timers';
 import { audioController } from './audio';
@@ -36,6 +36,7 @@ const Tab1: React.FC = () => {
       </audio>
     </>
   );
+  const [restToast, setRestToast] = useState(false);
   const setMinutesValue = (event: any) => {
     event.preventDefault();
     setminutesInput(parseInt(event.target.value));
@@ -78,6 +79,7 @@ const Tab1: React.FC = () => {
           setTotalTime(restInput);
           intervalSetter(restInput);
           setRestNow(false);
+          setRestToast(true);
         } else if (currentRound < roundsInput && !restNow) {
           setTotalTime(totalTimeCopy);
           intervalSetter(totalTimeCopy);
@@ -166,6 +168,13 @@ const Tab1: React.FC = () => {
             </IonCol>
           </IonRow>
         </IonGrid>
+        <IonToast
+        isOpen={restToast}
+        onDidDismiss={() => setRestToast(false)}
+        message="Rest now"
+        duration={9*1000}
+        position="top"
+      />
         <IonItemDivider />
         <IonCard>
           <IonItem>
@@ -183,7 +192,6 @@ const Tab1: React.FC = () => {
             <IonLabel>Seconds</IonLabel>
             <IonSelect disabled={disabledForm} value={secondsInput} okText="Ok" cancelText="Cancel" onIonChange={e => setSecondsValue(e)}>
               <IonSelectOption value="0">0</IonSelectOption>
-              <IonSelectOption value="10">10</IonSelectOption>
               <IonSelectOption value="20">20</IonSelectOption>
               <IonSelectOption value="30">30</IonSelectOption>
               <IonSelectOption value="40">40</IonSelectOption>
@@ -193,7 +201,6 @@ const Tab1: React.FC = () => {
           <IonItem>
             <IonLabel>Rest</IonLabel>
             <IonSelect disabled={disabledForm} value={restInput} okText="Ok" cancelText="Cancel" onIonChange={e => setRestValue(e)}>
-              <IonSelectOption value="10">10</IonSelectOption>
               <IonSelectOption value="20">20</IonSelectOption>
               <IonSelectOption value="30">30</IonSelectOption>
               <IonSelectOption value="40">40</IonSelectOption>
